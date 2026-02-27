@@ -4,7 +4,7 @@
  */
 import { LitElement, html, css } from 'lit';
 import { computeStatus, STATUS_CONFIG } from './models/interpolation.js';
-import { getPreset, ROOM_COLORS } from './models/profiles.js';
+import { getPreset, PROFILES, ROOM_COLORS } from './models/profiles.js';
 import './components/heatmap-canvas.js';
 import './components/room-card.js';
 import './components/history-graph.js';
@@ -161,7 +161,8 @@ class HumidityHeatmapCard extends LitElement {
           thresholds: {},
           deviation: 0,
           statusColor: '#64748b',
-          color: roomCfg.color || ROOM_COLORS[i % ROOM_COLORS.length],
+          color:
+            roomCfg.color || PROFILES[profile]?.markerColor || ROOM_COLORS[i % ROOM_COLORS.length],
           profile,
           humidityEntity: roomCfg.humidity,
           dehumidifierEntity: roomCfg.dehumidifier,
@@ -179,7 +180,8 @@ class HumidityHeatmapCard extends LitElement {
         thresholds,
         deviation,
         statusColor,
-        color: roomCfg.color || ROOM_COLORS[i % ROOM_COLORS.length],
+        color:
+          roomCfg.color || PROFILES[profile]?.markerColor || ROOM_COLORS[i % ROOM_COLORS.length],
         profile,
         humidityEntity: roomCfg.humidity,
         dehumidifierEntity: roomCfg.dehumidifier,

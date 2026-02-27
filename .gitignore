@@ -4,4 +4,3 @@ dist/
 *.log
 test-results/
 coverage/
-docs/

@@ -54,8 +54,6 @@ export const STATUS = {
   TOO_DRY: 'too_dry',
   OPTIMAL: 'optimal',
   HUMID: 'humid',
-  TOO_HUMID: 'too_humid',
-  VIGILANCE: 'vigilance',
   CRITICAL: 'critical',
 };
 
@@ -66,8 +64,6 @@ export const STATUS_CONFIG = {
   [STATUS.TOO_DRY]: { emoji: '💧', color: '#60a5fa', en: 'Too Dry', fr: 'Trop Sec' },
   [STATUS.OPTIMAL]: { emoji: '✅', color: '#22c55e', en: 'Optimal', fr: 'Optimal' },
   [STATUS.HUMID]: { emoji: '🟡', color: '#f59e0b', en: 'Humid', fr: 'Humide' },
-  [STATUS.TOO_HUMID]: { emoji: '🔴', color: '#ef4444', en: 'Too Humid', fr: 'Trop Humide' },
-  [STATUS.VIGILANCE]: { emoji: '🟡', color: '#f59e0b', en: 'Vigilance', fr: 'Vigilance' },
   [STATUS.CRITICAL]: { emoji: '🔴', color: '#ef4444', en: 'Critical', fr: 'Critique' },
 };
 
@@ -89,12 +85,8 @@ export function computeStatus(humidity, temp, preset) {
     status = STATUS.OPTIMAL;
   } else if (humidity <= thresholds.max) {
     status = STATUS.HUMID;
-  } else if (thresholds.trigger && humidity <= thresholds.trigger) {
-    status = STATUS.VIGILANCE;
-  } else if (thresholds.trigger && humidity > thresholds.trigger) {
-    status = STATUS.CRITICAL;
   } else {
-    status = STATUS.TOO_HUMID;
+    status = STATUS.CRITICAL;
   }
 
   return { status, thresholds, deviation };
@@ -115,7 +107,6 @@ export function statusColorRGB(temp, humidity, profile, presets) {
     if (humidity < t.min) return [20, 45, 70]; // blue - too dry
     if (humidity <= t.target) return [20, 55, 35]; // green - optimal
     if (humidity <= t.max) return [60, 60, 15]; // yellow - humid
-    if (t.trigger && humidity <= t.trigger) return [100, 55, 15]; // orange
     return [140, 30, 30]; // red - critical
   };
 

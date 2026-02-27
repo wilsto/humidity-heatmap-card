@@ -3,10 +3,29 @@
  * Draws the temperature/humidity heatmap with room markers
  */
 import { LitElement, html, css } from 'lit';
-import { statusColorRGB, getThresholds } from '../models/interpolation.js';
+import { interpolate, statusColorRGB } from '../models/interpolation.js';
 import { PRESETS } from '../models/profiles.js';
 
 const RESOLUTION = 3; // pixels per heatmap cell
+
+// MDI icon names → emoji for canvas rendering
+const MDI_TO_EMOJI = {
+  'mdi:sofa': '🛋',
+  'mdi:bed': '🛏',
+  'mdi:desk': '💻',
+  'mdi:shower': '🚿',
+  'mdi:washing-machine': '🧺',
+  'mdi:garage': '🚗',
+  'mdi:cellar': '🍷',
+  'mdi:home': '🏠',
+  'mdi:thermometer': '🌡',
+  'mdi:water': '💧',
+  'mdi:office-building': '🏢',
+  'mdi:baby-carriage': '👶',
+  'mdi:pool': '🏊',
+  'mdi:flower': '🌸',
+  'mdi:tree': '🌳',
+};
 
 export class HeatmapCanvas extends LitElement {
   static properties = {
@@ -49,6 +68,27 @@ export class HeatmapCanvas extends LitElement {
     .tooltip.visible {
       opacity: 1;
     }
+    .color-scale {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-top: 12px;
+    }
+    .cs-bar {
+      height: 8px;
+      flex: 1;
+      max-width: 80px;
+    }
+    .cs-label {
+      font-size: 0.65rem;
+      color: #4b5563;
+      padding: 0 6px;
+      white-space: nowrap;
+    }
+    .cs-mid {
+      color: #64748b;
+    }
   `;
 
   constructor() {
@@ -68,6 +108,7 @@ export class HeatmapCanvas extends LitElement {
   }
 
   render() {
+    const loc = this.localize;
     return html`
       <div class="heatmap-container">
         <canvas></canvas>
@@ -77,6 +118,21 @@ export class HeatmapCanvas extends LitElement {
         >
           ${this._tooltip.content}
         </div>
+      </div>
+      <div class="color-scale">
+        <span class="cs-label">${loc?.('heatmap.dry') || 'Trop sec'}</span>
+        <div
+          class="cs-bar"
+          style="background:linear-gradient(90deg,#1e3a5f,#1a3354);border-radius:4px 0 0 4px"
+        ></div>
+        <div class="cs-bar" style="background:linear-gradient(90deg,#14352a,#163a2d)"></div>
+        <span class="cs-label cs-mid">${loc?.('heatmap.optimal') || 'Optimal'}</span>
+        <div class="cs-bar" style="background:linear-gradient(90deg,#3a3010,#4a3a10)"></div>
+        <div
+          class="cs-bar"
+          style="background:linear-gradient(90deg,#3f1f1f,#4a2020);border-radius:0 4px 4px 0"
+        ></div>
+        <span class="cs-label">${loc?.('heatmap.critical') || 'Critique'}</span>
       </div>
     `;
   }
@@ -108,7 +164,7 @@ export class HeatmapCanvas extends LitElement {
 
     const container = this._canvas.parentElement;
     const w = container.clientWidth;
-    const h = Math.round(w * 0.55); // aspect ratio
+    const h = Math.round(w * 0.5); // aspect ratio (slightly less tall)
     const dpr = window.devicePixelRatio || 1;
 
     this._canvas.width = w * dpr;
@@ -120,7 +176,7 @@ export class HeatmapCanvas extends LitElement {
     this._h = h;
 
     const { tempMin, tempMax, humMin, humMax } = this._ranges;
-    const pad = { top: 20, right: 60, bottom: 35, left: 50 };
+    const pad = { top: 30, right: 20, bottom: 40, left: 50 };
     const plotW = w - pad.left - pad.right;
     const plotH = h - pad.top - pad.bottom;
 
@@ -152,10 +208,19 @@ export class HeatmapCanvas extends LitElement {
       }
     }
 
-    // Draw scaled heatmap
+    // Draw scaled heatmap with clipped corners
     const offscreen = new OffscreenCanvas(imgData.width, imgData.height);
     offscreen.getContext('2d').putImageData(imgData, 0, 0);
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(pad.left, pad.top, plotW, plotH, 4);
+    ctx.clip();
+    ctx.imageSmoothingEnabled = true;
     ctx.drawImage(offscreen, pad.left, pad.top, plotW, plotH);
+    ctx.restore();
+
+    // Grid
+    this._drawGrid(ctx, pad, plotW, plotH, tempMin, tempMax, humMin, humMax);
 
     // Reference lines
     this._drawRefLines(ctx, pad, plotW, plotH, tempMin, tempMax, humMin, humMax, presets);
@@ -167,55 +232,127 @@ export class HeatmapCanvas extends LitElement {
     this._drawMarkers(ctx, pad, plotW, plotH, tempMin, tempMax, humMin, humMax);
   }
 
+  _drawGrid(ctx, pad, plotW, plotH, tMin, tMax, hMin, hMax) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 0.5;
+
+    for (let t = Math.ceil(tMin); t <= tMax; t += 2) {
+      const x = pad.left + ((t - tMin) / (tMax - tMin)) * plotW;
+      ctx.beginPath();
+      ctx.moveTo(x, pad.top);
+      ctx.lineTo(x, pad.top + plotH);
+      ctx.stroke();
+    }
+
+    for (let h = Math.ceil(hMin / 5) * 5; h <= hMax; h += 5) {
+      const y = pad.top + ((hMax - h) / (hMax - hMin)) * plotH;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(pad.left + plotW, y);
+      ctx.stroke();
+    }
+  }
+
   _drawRefLines(ctx, pad, plotW, plotH, tMin, tMax, hMin, hMax, presets) {
-    const drawCurve = (points, color, dash = [6, 4]) => {
+    // Clip to plot area
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(pad.left, pad.top, plotW, plotH);
+    ctx.clip();
+
+    const drawCurve = (points, color, dash = []) => {
       if (!points) return;
       ctx.beginPath();
       ctx.strokeStyle = color;
       ctx.lineWidth = 1.5;
       ctx.setLineDash(dash);
-      ctx.globalAlpha = 0.4;
-      points.forEach(([t, h], i) => {
+      // Smooth curve with 0.5° steps
+      for (let t = tMin; t <= tMax; t += 0.5) {
         const x = pad.left + ((t - tMin) / (tMax - tMin)) * plotW;
+        const h = interpolate(points, t);
         const y = pad.top + ((hMax - h) / (hMax - hMin)) * plotH;
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      });
+        t === tMin ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.globalAlpha = 1;
     };
 
     const tab = this.activeTab;
-    if (tab === 'all' || tab === 'habitat') {
-      drawCurve(presets.habitat.target, 'rgba(255,255,255,0.7)', [8, 4]);
-    }
     if (tab === 'all' || tab === 'protection') {
-      drawCurve(presets.protection.target, 'rgba(255,255,255,0.5)', [4, 4]);
+      drawCurve(presets.protection.trigger, 'rgba(255,255,255,0.25)', [4, 3]);
+      drawCurve(presets.protection.target, 'rgba(255,255,255,0.35)');
+    }
+    if (tab === 'all' || tab === 'habitat') {
+      drawCurve(presets.habitat.target, 'rgba(255,255,255,0.35)');
+      drawCurve(presets.habitat.max, 'rgba(255,255,255,0.15)', [3, 3]);
+    }
+
+    ctx.restore();
+
+    // Curve labels at right edge
+    this._drawCurveLabels(ctx, pad, plotW, plotH, tMin, tMax, hMin, hMax, presets);
+  }
+
+  _drawCurveLabels(ctx, pad, plotW, plotH, tMin, tMax, hMin, hMax, presets) {
+    ctx.font = '500 9px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+
+    const tEdge = tMax - 1;
+    const yForH = h => pad.top + ((hMax - h) / (hMax - hMin)) * plotH;
+
+    const tab = this.activeTab;
+    if (tab === 'all' || tab === 'protection') {
       if (presets.protection.trigger) {
-        drawCurve(presets.protection.trigger, 'rgba(255,100,100,0.5)', [3, 3]);
+        const h = interpolate(presets.protection.trigger, tEdge);
+        ctx.fillText('trigger ↑', pad.left + plotW - 6, yForH(h) - 5);
       }
+      const hTarget = interpolate(presets.protection.target, tEdge);
+      ctx.fillText('cible protection', pad.left + plotW - 6, yForH(hTarget) + 12);
+    }
+    if (tab === 'all' || tab === 'habitat') {
+      const hTarget = interpolate(presets.habitat.target, tEdge);
+      ctx.fillText('cible habitat', pad.left + plotW - 6, yForH(hTarget) + 12);
     }
   }
 
   _drawAxes(ctx, pad, plotW, plotH, tMin, tMax, hMin, hMax) {
-    const textColor =
-      getComputedStyle(this).getPropertyValue('--secondary-text-color') || '#94a3b8';
+    const textColor = '#374151';
     ctx.fillStyle = textColor;
-    ctx.font = '11px Arial, sans-serif';
+    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
 
-    // X axis (temperature)
+    // X axis tick labels
     for (let t = Math.ceil(tMin); t <= tMax; t += 2) {
       const x = pad.left + ((t - tMin) / (tMax - tMin)) * plotW;
-      ctx.fillText(`${t}°`, x, pad.top + plotH + 15);
+      ctx.fillText(`${t}°`, x, pad.top + plotH + 16);
     }
 
-    // Y axis (humidity)
+    // X axis title
+    const loc = this.localize;
+    ctx.fillText(
+      loc?.('heatmap.x_axis') || 'Température (°C)',
+      pad.left + plotW / 2,
+      pad.top + plotH + 34,
+    );
+
+    // Y axis tick labels
     ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
     for (let h = Math.ceil(hMin / 5) * 5; h <= hMax; h += 5) {
       const y = pad.top + ((hMax - h) / (hMax - hMin)) * plotH;
-      ctx.fillText(`${h}%`, pad.left - 8, y + 4);
+      ctx.fillText(`${h}%`, pad.left - 6, y);
     }
+
+    // Y axis title (rotated)
+    ctx.save();
+    ctx.translate(12, pad.top + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(loc?.('heatmap.y_axis') || 'Humidité relative (%)', 0, 0);
+    ctx.restore();
   }
 
   _drawMarkers(ctx, pad, plotW, plotH, tMin, tMax, hMin, hMax) {
@@ -223,7 +360,7 @@ export class HeatmapCanvas extends LitElement {
 
     const filteredRooms = this._getFilteredRooms();
 
-    filteredRooms.forEach((room, i) => {
+    filteredRooms.forEach(room => {
       const x = pad.left + ((room.temp - tMin) / (tMax - tMin)) * plotW;
       const y = pad.top + ((hMax - room.humidity) / (hMax - hMin)) * plotH;
 
@@ -236,45 +373,65 @@ export class HeatmapCanvas extends LitElement {
       room._y = cy;
 
       // Glow
-      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30);
-      grad.addColorStop(0, 'rgba(255,255,255,0.25)');
-      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 24);
+      grad.addColorStop(0, 'rgba(255,255,255,0.12)');
+      grad.addColorStop(1, 'transparent');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 24, 0, Math.PI * 2);
       ctx.fill();
 
       // Outer ring (status color)
       ctx.beginPath();
-      ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 11, 0, Math.PI * 2);
       ctx.strokeStyle = room.statusColor;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Inner dot (room color)
+      // Dark ring between outer ring and inner dot
       ctx.beginPath();
-      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 7.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#0d0f15';
+      ctx.fill();
+
+      // Inner dot (profile color)
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
       ctx.fillStyle = room.color;
       ctx.fill();
 
       // Label pill
-      const label = `${room.icon || ''} ${room.name}`;
-      ctx.font = 'bold 11px Arial, sans-serif';
-      const tw = ctx.measureText(label).width + 16;
-      const lx = cx - tw / 2;
-      const ly = cy - 28;
+      const icon = MDI_TO_EMOJI[room.icon] || room.icon || '';
+      const label = `${icon} ${room.name}`;
+      ctx.font = '600 10px -apple-system, BlinkMacSystemFont, sans-serif';
+      const tw = ctx.measureText(label).width;
+      const lx = cx;
+      const ly = cy - 24;
 
-      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      // Pill background
+      ctx.fillStyle = '#0d0f15cc';
       ctx.beginPath();
-      ctx.roundRect(lx, ly, tw, 20, 6);
+      ctx.roundRect(lx - tw / 2 - 8, ly - 9, tw + 16, 18, 6);
       ctx.fill();
       ctx.strokeStyle = room.statusColor + '80';
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      ctx.fillStyle = '#fff';
+      // Pill text
+      ctx.fillStyle = '#e2e8f0';
       ctx.textAlign = 'center';
-      ctx.fillText(label, cx, ly + 14);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, lx, ly);
+
+      // Connector line (dashed, from pill bottom to ring top)
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 0.8;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(cx, ly + 9);
+      ctx.lineTo(cx, cy - 12);
+      ctx.stroke();
+      ctx.setLineDash([]);
     });
   }
 

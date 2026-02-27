@@ -4,6 +4,7 @@
 
 ### Added
 
+- Unified 4-status system: Too Dry, Optimal, Humid, Critical (profile-independent)
 - Canvas-based humidity/temperature heatmap visualization
 - ASHRAE 55 (comfort) and BS 5250 (building protection) threshold profiles
 - Custom threshold presets with linear interpolation

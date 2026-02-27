@@ -8,19 +8,22 @@ export const PROFILES = {
     label: { en: 'Living Space', fr: 'Espace de vie' },
     icon: 'mdi:home-thermometer',
     badge: { en: 'Comfort', fr: 'Confort' },
-    badgeColor: '#3b82f6',
+    badgeColor: '#14b3b8ff',
+    markerColor: '#14b3b8ff',
   },
   protection: {
     label: { en: 'Building Protection', fr: 'Protection bâti' },
     icon: 'mdi:shield-home',
     badge: { en: 'Prevention', fr: 'Prévention' },
-    badgeColor: '#ef4444',
+    badgeColor: '#8b5cf6',
+    markerColor: '#8b5cf6',
   },
   custom: {
     label: { en: 'Custom', fr: 'Personnalisé' },
     icon: 'mdi:tune-variant',
     badge: { en: 'Custom', fr: 'Custom' },
-    badgeColor: '#8b5cf6',
+    badgeColor: '#a29fa9ff',
+    markerColor: '#a29fa9ff',
   },
 };
 

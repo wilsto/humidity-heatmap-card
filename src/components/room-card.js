@@ -40,6 +40,10 @@ export class RoomCard extends LitElement {
     .room-icon {
       font-size: 20px;
     }
+    ha-icon.room-icon-mdi {
+      --mdc-icon-size: 20px;
+      color: var(--secondary-text-color, #94a3b8);
+    }
     .room-name {
       font-weight: 600;
       font-size: 14px;
@@ -55,48 +59,56 @@ export class RoomCard extends LitElement {
     }
     .metrics {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
       gap: 6px;
       margin-bottom: 10px;
     }
     .metric {
       text-align: center;
-      padding: 6px 4px;
-      border-radius: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
       background: var(--ha-card-background, rgba(255, 255, 255, 0.04));
     }
     .metric-label {
-      font-size: 10px;
+      font-size: 0.62rem;
       color: var(--secondary-text-color, #94a3b8);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .metric-value {
-      font-size: 18px;
-      font-weight: 700;
+      font-size: 0.95rem;
+      font-weight: 600;
       color: var(--primary-text-color, #fff);
       margin-top: 2px;
     }
-    .progress-bar {
-      height: 6px;
-      border-radius: 3px;
-      background: rgba(255, 255, 255, 0.1);
-      margin-bottom: 8px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.5s ease;
-    }
     .status-row {
+      margin-top: 6px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      font-size: 0.72rem;
     }
     .status {
-      font-size: 12px;
       font-weight: 600;
+      white-space: nowrap;
+    }
+    .status-bar {
+      flex: 1;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      margin: 0 10px;
+      overflow: hidden;
+    }
+    .status-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.5s ease;
+    }
+    .max-label {
+      color: var(--secondary-text-color, #64748b);
+      font-size: 0.72rem;
+      white-space: nowrap;
     }
     .dehumidifier {
       display: flex;
@@ -124,25 +136,30 @@ export class RoomCard extends LitElement {
     const profile = PROFILES[r.profile] || PROFILES.habitat;
     const loc = this.localize;
 
-    // Progress: position of humidity relative to min..trigger/max range
-    const rangeMax = r.thresholds?.trigger || r.thresholds?.max || 70;
-    const rangeMin = r.thresholds?.min || 30;
-    const pct = Math.max(0, Math.min(100, ((r.humidity - rangeMin) / (rangeMax - rangeMin)) * 100));
+    // Progress: ratio of humidity to max threshold
+    const maxThreshold = r.thresholds?.max || 70;
+    const pct = Math.min(100, Math.max(5, (r.humidity / maxThreshold) * 100));
+
+    // Deviation color: orange if above target, green if at or below
+    const deviationColor = r.deviation > 0 ? '#f59e0b' : '#22c55e';
+
+    // Badge emoji based on profile
+    const badgeEmoji = r.profile === 'protection' ? '🛡' : r.profile === 'custom' ? '🔧' : '🛋';
 
     return html`
       <div class="room-card" @click=${this._openMoreInfo}>
         <div class="header">
-          <span class="room-icon">${r.icon || '🏠'}</span>
+          <span class="room-icon">${this._renderIcon(r.icon)}</span>
           <span class="room-name">${r.name}</span>
           <span class="badge" style="background:${profile.badgeColor}">
-            ${profile.badge[l] || profile.badge.en}
+            ${badgeEmoji} ${profile.badge[l] || profile.badge.en}
           </span>
         </div>
 
         <div class="metrics">
           <div class="metric">
             <div class="metric-label">${loc?.('card.temp') || 'Temp'}</div>
-            <div class="metric-value">${r.temp?.toFixed(1) ?? '—'}°</div>
+            <div class="metric-value" style="color:#f59e0b">${r.temp?.toFixed(1) ?? '—'}°C</div>
           </div>
           <div class="metric">
             <div class="metric-label">${loc?.('card.humidity') || 'Humidity'}</div>
@@ -152,26 +169,36 @@ export class RoomCard extends LitElement {
           </div>
           <div class="metric">
             <div class="metric-label">${loc?.('card.target') || 'Target'}</div>
-            <div class="metric-value">${r.thresholds?.target?.toFixed(1) ?? '—'}%</div>
+            <div class="metric-value" style="color:#94a3b8">
+              ${r.thresholds?.target?.toFixed(1) ?? '—'}%
+            </div>
           </div>
           <div class="metric">
             <div class="metric-label">${loc?.('card.deviation') || 'Gap'}</div>
-            <div class="metric-value" style="color:${sc.color}">
+            <div class="metric-value" style="color:${deviationColor}">
               ${r.deviation > 0 ? '+' : ''}${r.deviation?.toFixed(1) ?? '—'}%
             </div>
           </div>
         </div>
 
-        <div class="progress-bar">
-          <div class="progress-fill" style="width:${pct}%; background:${sc.color}"></div>
-        </div>
-
         <div class="status-row">
           <span class="status" style="color:${sc.color}"> ${sc.emoji} ${sc[l] || sc.en} </span>
-          ${r.dehumidifierEntity ? this._renderDehumidifier(r) : ''}
+          <div class="status-bar">
+            <div class="status-fill" style="width:${pct}%; background:${sc.color}"></div>
+          </div>
+          <span class="max-label">Max: ${maxThreshold.toFixed(1)}%</span>
         </div>
+
+        ${r.dehumidifierEntity ? this._renderDehumidifier(r) : ''}
       </div>
     `;
+  }
+
+  _renderIcon(icon) {
+    if (!icon) return '🏠';
+    if (icon.startsWith('mdi:'))
+      return html`<ha-icon .icon=${icon} class="room-icon-mdi"></ha-icon>`;
+    return icon;
   }
 
   _renderDehumidifier(r) {

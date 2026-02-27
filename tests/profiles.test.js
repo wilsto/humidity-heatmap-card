@@ -16,7 +16,7 @@ describe('PROFILES', () => {
       expect(profile.label).toHaveProperty('fr');
       expect(profile.icon).toMatch(/^mdi:/);
       expect(profile.badge).toHaveProperty('en');
-      expect(profile.badgeColor).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(profile.badgeColor).toMatch(/^#[0-9a-f]{6}([0-9a-f]{2})?$/i);
     }
   });
 });

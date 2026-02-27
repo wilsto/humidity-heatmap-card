@@ -21,8 +21,6 @@
     "too_dry": "Too Dry",
     "optimal": "Optimal",
     "humid": "Humid",
-    "too_humid": "Too Humid",
-    "vigilance": "Vigilance",
     "critical": "Critical"
   },
   "heatmap": {
@@ -30,7 +28,10 @@
     "y_axis": "Relative Humidity (%)",
     "target_habitat": "Target (living)",
     "target_protection": "Target (building)",
-    "critical_zone": "Critical zone"
+    "critical_zone": "Critical zone",
+    "dry": "Too dry",
+    "optimal": "Optimal",
+    "critical": "Critical"
   },
   "history": {
     "title": "History",

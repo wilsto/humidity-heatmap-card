@@ -6,6 +6,8 @@
 
 A **Home Assistant Lovelace** card that displays a **dynamic temperature/humidity heatmap** for multi-room monitoring with **adaptive thresholds** based on scientific standards.
 
+![Humidity Heatmap Card](docs/screenshot.png)
+
 ## Features
 
 - **Dynamic heatmap** — Canvas-based visualization where every pixel shows humidity status at that temperature/humidity point

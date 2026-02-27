@@ -118,20 +118,20 @@ describe('computeStatus', () => {
     expect(status).toBe(STATUS.HUMID);
   });
 
-  it('returns too_humid above max for preset without trigger', () => {
-    // At 20°C, ASHRAE max=55, no trigger
+  it('returns critical above max (no trigger)', () => {
+    // At 20°C, ASHRAE max=55 → above max is critical
     const { status } = computeStatus(60, 20, ashrae);
-    expect(status).toBe(STATUS.TOO_HUMID);
+    expect(status).toBe(STATUS.CRITICAL);
   });
 
-  it('returns vigilance between max and trigger for BS5250', () => {
-    // At 20°C, BS5250 max=60, trigger=65
+  it('returns critical above max (BS5250)', () => {
+    // At 20°C, BS5250 max=60 → above max is critical
     const { status } = computeStatus(62, 20, bs5250);
-    expect(status).toBe(STATUS.VIGILANCE);
+    expect(status).toBe(STATUS.CRITICAL);
   });
 
-  it('returns critical above trigger for BS5250', () => {
-    // At 20°C, BS5250 trigger=65
+  it('returns critical well above max (BS5250)', () => {
+    // At 20°C, BS5250 max=60 → humidity 70 is critical
     const { status } = computeStatus(70, 20, bs5250);
     expect(status).toBe(STATUS.CRITICAL);
   });
@@ -176,16 +176,16 @@ describe('statusColorRGB', () => {
     expect(rgb).toEqual([60, 60, 15]);
   });
 
-  it('returns red for critical (habitat, no trigger)', () => {
-    // At 20°C, ASHRAE max=55 → humidity 60 goes straight to red
+  it('returns red for critical (habitat)', () => {
+    // At 20°C, ASHRAE max=55 → humidity 60 is critical
     const rgb = statusColorRGB(20, 60, 'habitat', presets);
     expect(rgb).toEqual([140, 30, 30]);
   });
 
-  it('returns orange for vigilance (protection)', () => {
-    // At 20°C, BS5250 max=60, trigger=65 → humidity 62 is vigilance
+  it('returns red for critical (protection)', () => {
+    // At 20°C, BS5250 max=60 → humidity 62 is critical
     const rgb = statusColorRGB(20, 62, 'protection', presets);
-    expect(rgb).toEqual([100, 55, 15]);
+    expect(rgb).toEqual([140, 30, 30]);
   });
 
   it('blends colors in 14-22°C zone for "all" profile', () => {

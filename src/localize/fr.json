@@ -21,16 +21,17 @@
     "too_dry": "Trop Sec",
     "optimal": "Optimal",
     "humid": "Humide",
-    "too_humid": "Trop Humide",
-    "vigilance": "Vigilance",
     "critical": "Critique"
   },
   "heatmap": {
     "x_axis": "Température (°C)",
-    "y_axis": "Humidité Relative (%)",
+    "y_axis": "Humidité relative (%)",
     "target_habitat": "Cible habitat",
     "target_protection": "Cible protection",
-    "critical_zone": "Zone critique"
+    "critical_zone": "Zone critique",
+    "dry": "Trop sec",
+    "optimal": "Optimal",
+    "critical": "Critique"
   },
   "history": {
     "title": "Historique",
