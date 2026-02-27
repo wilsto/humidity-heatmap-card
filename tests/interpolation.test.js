@@ -77,11 +77,11 @@ describe('getThresholds', () => {
   });
 
   it('computes correct values at ASHRAE55 calibration points', () => {
-    // At temp=15: max=60, target=50, min=40
+    // At temp=15: max=68, target=58, min=48 (European-adjusted)
     const t = getThresholds(15, PRESETS.ashrae55);
-    expect(t.max).toBe(60);
-    expect(t.target).toBe(50);
-    expect(t.min).toBe(40);
+    expect(t.max).toBe(68);
+    expect(t.target).toBe(58);
+    expect(t.min).toBe(48);
   });
 
   it('computes correct values at BS5250 calibration points', () => {
@@ -101,26 +101,26 @@ describe('computeStatus', () => {
   const bs5250 = PRESETS.bs5250;
 
   it('returns too_dry when below min', () => {
-    // At 20°C, ASHRAE min=37
+    // At 20°C, ASHRAE min=42
     const { status } = computeStatus(30, 20, ashrae);
     expect(status).toBe(STATUS.TOO_DRY);
   });
 
   it('returns optimal between min and target', () => {
-    // At 20°C, ASHRAE min=37, target=47
-    const { status } = computeStatus(42, 20, ashrae);
+    // At 20°C, ASHRAE min=42, target=52
+    const { status } = computeStatus(47, 20, ashrae);
     expect(status).toBe(STATUS.OPTIMAL);
   });
 
   it('returns humid between target and max', () => {
-    // At 20°C, ASHRAE target=47, max=55
-    const { status } = computeStatus(50, 20, ashrae);
+    // At 20°C, ASHRAE target=52, max=62
+    const { status } = computeStatus(55, 20, ashrae);
     expect(status).toBe(STATUS.HUMID);
   });
 
   it('returns critical above max (no trigger)', () => {
-    // At 20°C, ASHRAE max=55 → above max is critical
-    const { status } = computeStatus(60, 20, ashrae);
+    // At 20°C, ASHRAE max=62 → above max is critical
+    const { status } = computeStatus(65, 20, ashrae);
     expect(status).toBe(STATUS.CRITICAL);
   });
 
@@ -137,8 +137,8 @@ describe('computeStatus', () => {
   });
 
   it('computes deviation from target', () => {
-    // At 20°C, ASHRAE target=47, humidity=50 → deviation=3
-    const { deviation } = computeStatus(50, 20, ashrae);
+    // At 20°C, ASHRAE target=52, humidity=55 → deviation=3
+    const { deviation } = computeStatus(55, 20, ashrae);
     expect(deviation).toBe(3);
   });
 
@@ -159,26 +159,26 @@ describe('statusColorRGB', () => {
   };
 
   it('returns blue for too dry (habitat)', () => {
-    // At 20°C, ASHRAE min=37 → humidity 30 is too dry
+    // At 20°C, ASHRAE min=42 → humidity 30 is too dry
     const rgb = statusColorRGB(20, 30, 'habitat', presets);
     expect(rgb).toEqual([20, 45, 70]);
   });
 
   it('returns green for optimal (habitat)', () => {
-    // At 20°C, ASHRAE min=37, target=47 → humidity 42 is optimal
-    const rgb = statusColorRGB(20, 42, 'habitat', presets);
+    // At 20°C, ASHRAE min=42, target=52 → humidity 47 is optimal
+    const rgb = statusColorRGB(20, 47, 'habitat', presets);
     expect(rgb).toEqual([20, 55, 35]);
   });
 
   it('returns yellow for humid (habitat)', () => {
-    // At 20°C, ASHRAE target=47, max=55 → humidity 50 is humid
-    const rgb = statusColorRGB(20, 50, 'habitat', presets);
+    // At 20°C, ASHRAE target=52, max=62 → humidity 55 is humid
+    const rgb = statusColorRGB(20, 55, 'habitat', presets);
     expect(rgb).toEqual([60, 60, 15]);
   });
 
   it('returns red for critical (habitat)', () => {
-    // At 20°C, ASHRAE max=55 → humidity 60 is critical
-    const rgb = statusColorRGB(20, 60, 'habitat', presets);
+    // At 20°C, ASHRAE max=62 → humidity 65 is critical
+    const rgb = statusColorRGB(20, 65, 'habitat', presets);
     expect(rgb).toEqual([140, 30, 30]);
   });
 

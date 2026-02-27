@@ -1,6 +1,6 @@
 {
   "name": "humidity-heatmap-card",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Home Assistant Lovelace card — multi-room humidity heatmap with adaptive thresholds",
   "main": "dist/humidity-heatmap-card.js",

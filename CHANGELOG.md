@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.1] - 2026-02-27
+
+### Changed
+
+- Raised ASHRAE 55 (habitat) thresholds for European homes without AC
+  - At 20°C: max 55→62%, target 47→52%, min 37→42%
+  - Based on BS EN ISO 13788 / DTU standards (60-65% HR acceptable in heated homes)
+  - Prevents false "Critical" status in typical French homes (50-62% HR)
+
 ## [1.0.0] - 2026-02-27
 
 ### Added
