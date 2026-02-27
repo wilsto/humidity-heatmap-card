@@ -1,0 +1,62 @@
+{
+  "common": {
+    "version": "v1.0.0",
+    "all": "Vue complète",
+    "habitat": "Espace de vie",
+    "protection": "Protection bâti",
+    "comfort": "Confort",
+    "prevention": "Prévention"
+  },
+  "card": {
+    "title": "Gestion Humidité",
+    "temp": "Temp",
+    "humidity": "Humidité",
+    "target": "Cible",
+    "deviation": "Écart",
+    "dehumidifier": "Déshumidificateur",
+    "on": "ON",
+    "off": "OFF"
+  },
+  "status": {
+    "too_dry": "Trop Sec",
+    "optimal": "Optimal",
+    "humid": "Humide",
+    "too_humid": "Trop Humide",
+    "vigilance": "Vigilance",
+    "critical": "Critique"
+  },
+  "heatmap": {
+    "x_axis": "Température (°C)",
+    "y_axis": "Humidité Relative (%)",
+    "target_habitat": "Cible habitat",
+    "target_protection": "Cible protection",
+    "critical_zone": "Zone critique"
+  },
+  "history": {
+    "title": "Historique",
+    "hours_1": "1h",
+    "hours_6": "6h",
+    "hours_12": "12h",
+    "hours_24": "24h",
+    "hours_48": "48h",
+    "days_7": "7j"
+  },
+  "editor": {
+    "title": "Carte Heatmap Humidité",
+    "display_mode": "Mode d'affichage",
+    "show_tabs": "Afficher les onglets profil",
+    "show_graph": "Afficher le graphe historique",
+    "graph_hours": "Fenêtre du graphe (heures)",
+    "language": "Langue",
+    "rooms": "Pièces",
+    "add_room": "Ajouter une pièce",
+    "room_name": "Nom de la pièce",
+    "room_icon": "Icône",
+    "room_profile": "Profil",
+    "room_preset": "Preset de seuils",
+    "room_color": "Couleur du marker",
+    "temperature_entity": "Capteur température",
+    "humidity_entity": "Capteur humidité",
+    "dehumidifier_entity": "Switch déshumidificateur"
+  }
+}

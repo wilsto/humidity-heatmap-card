@@ -1,0 +1,62 @@
+{
+  "common": {
+    "version": "v1.0.0",
+    "all": "All",
+    "habitat": "Living Space",
+    "protection": "Building Protection",
+    "comfort": "Comfort",
+    "prevention": "Prevention"
+  },
+  "card": {
+    "title": "Humidity Management",
+    "temp": "Temp",
+    "humidity": "Humidity",
+    "target": "Target",
+    "deviation": "Gap",
+    "dehumidifier": "Dehumidifier",
+    "on": "ON",
+    "off": "OFF"
+  },
+  "status": {
+    "too_dry": "Too Dry",
+    "optimal": "Optimal",
+    "humid": "Humid",
+    "too_humid": "Too Humid",
+    "vigilance": "Vigilance",
+    "critical": "Critical"
+  },
+  "heatmap": {
+    "x_axis": "Temperature (°C)",
+    "y_axis": "Relative Humidity (%)",
+    "target_habitat": "Target (living)",
+    "target_protection": "Target (building)",
+    "critical_zone": "Critical zone"
+  },
+  "history": {
+    "title": "History",
+    "hours_1": "1h",
+    "hours_6": "6h",
+    "hours_12": "12h",
+    "hours_24": "24h",
+    "hours_48": "48h",
+    "days_7": "7d"
+  },
+  "editor": {
+    "title": "Humidity Heatmap Card",
+    "display_mode": "Display Mode",
+    "show_tabs": "Show profile tabs",
+    "show_graph": "Show history graph",
+    "graph_hours": "Graph window (hours)",
+    "language": "Language",
+    "rooms": "Rooms",
+    "add_room": "Add room",
+    "room_name": "Room name",
+    "room_icon": "Icon",
+    "room_profile": "Profile",
+    "room_preset": "Threshold preset",
+    "room_color": "Marker color",
+    "temperature_entity": "Temperature sensor",
+    "humidity_entity": "Humidity sensor",
+    "dehumidifier_entity": "Dehumidifier switch"
+  }
+}
